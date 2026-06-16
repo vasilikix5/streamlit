@@ -3,6 +3,7 @@
 
 
 
+
 %%writefile app.py
 import streamlit as st
 import sqlite3
@@ -42,15 +43,34 @@ df = pd.read_sql_query("SELECT * FROM tasks", conn)
 
 if not df.empty :
   st.dataframe(df, use_container_width=True)
-  st.header("Διαγραφή εργασίας")
-  available_ids = df['id'].tolist()
-  id_to_delete=st.selectbox("Επέλεξε πιο id θέλεις να διαγράψεις", available_ids)
+  col1, col2 = st.columns(2)
 
-  if st.button("Διαγραφή επιλεγμένης εργασίας"):
-    cursor.execute("DELETE FROM tasks WHERE id = ?", (id_to_delete,))
-    conn.commit()
-    st.success(f"Το τασκ {id_to_delete} διαγραφτηκε επιτυχώς")
-    st.rerun()
+  with col1:
+    st.header("Ενημέρωση εργασίας")
+    available_ids_update = df['id'].tolist()
+    id_to_update = st.selectbox("Επέλεξε id για αλλαγή", available_ids_update, key="update_id")
+    new_title = st.text_input("Νέο όνομα εργασίας")
+
+    if st.button("Ενημέρωση τίτλου"):
+      cursor.execute("UPDATE tasks SET title = ? WHERE id = ?", (new_title, id_to_update))
+      conn.commit()
+      st.success(f"Το τασκ με id {id_to_update} ενημερώθηκε")
+      st.rerun()
+  
+
+  with col2:
+    st.header("Διαγραφή εργασίας")
+    available_ids_delete = df['id'].tolist()
+    id_to_delete = st.selectbox("Επέλεξε id για διαγραφή", available_ids_delete, key = "delete_id")
+
+    if st.button("Διαγραφή εργασίας"):
+      cursor.execute("DELETE FROM tasks WHERE id = ? ", (id_to_delete,))
+      conn.commit()
+      st.success(f"Το task με id {id_to_delete} διαγράφτηκε")
+      st.rerun()
+ 
+
+
 
 conn.close()
 
@@ -63,3 +83,4 @@ import urllib
 print("IP :", urllib.request.urlopen('https://ipv4.icanhazip.com').read().decode('utf-8').strip())
 
 !streamlit run app.py & ssh -o StrictHostKeyChecking=no -R 80:localhost:8501 serveo.net
+
